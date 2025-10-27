@@ -1,0 +1,18 @@
+body {
+  background-color: #a5c7e9;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+}
+
+h1{
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.card{
+  border-radius: 12px;
+}
+
+img{
+  max-height: 100%;
+  border-radius: 12px;
+}
