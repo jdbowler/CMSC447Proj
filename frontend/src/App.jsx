@@ -4,6 +4,7 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import { supabase } from './supabase';
 
 // Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -25,7 +26,17 @@ function App() {
   const [feedback, setFeedback] = useState('');
   const [feedbacks, setFeedbacks] = useState([]);
   const [routeDrawn, setRouteDrawn] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const mapRef = useRef(null);
+
+  useEffect(() => {
+    fetchFeedbacks();
+  }, []);
+  const fetchFeedbacks = async () => {
+    const { data, error } = await supabase.from('feedbacks').select('*');
+    if (error) console.error('Error fetching feedbacks:', error);
+    else setFeedbacks(data || []);
+  };
 
   useEffect(() => {
     if (mapRef.current) {
@@ -41,7 +52,7 @@ function App() {
       return;
     }
     if (mapRef.current) {
-      // Sample UMBC path (Academic Row to Library—accessible via ramps)
+      // Sample UMBC path
       const startLatLng = L.latLng(39.254, -76.712);
       const endLatLng = L.latLng(39.255, -76.713);
       L.Routing.control({
@@ -58,17 +69,28 @@ function App() {
     }
   };
 
-  const handleFeedback = (e) => {
+  const handleFeedback = async (e) => {
     e.preventDefault();
     if (!feedback.trim()) return alert('Add feedback!');
-   
-    // Mock save to local array in place of DB insert
-    const newFeedback = { start, end, message: feedback, timestamp: new Date().toISOString() };
-    setFeedbacks([...feedbacks, newFeedback]);
-    console.log('Feedback saved (mock DB):', newFeedback);
-   
+  
+    // Supabase insert
+    const newFeedback = { start, end, message: feedback };
+    const { error } = await supabase.from('feedbacks').insert([newFeedback]);
+    if (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit—check console.');
+      return;
+    }
+
+    // Mock DB Code
+    // // Update local state for count
+    // setFeedbacks([...feedbacks, newFeedback]);
+    // console.log('Feedback saved (DB):', newFeedback);
+  
     alert(`Feedback submitted! Total entries: ${feedbacks.length + 1}`);
     setFeedback('');
+    setShowFeedback(false);
+    fetchFeedbacks();
   };
 
   return (
@@ -78,7 +100,8 @@ function App() {
       color: '#000',
       fontFamily: 'Arial, sans-serif',
       textAlign: 'center',
-      padding: '20px'
+      padding: '20px',
+      position: 'relative'
     }}>
       {/* Header */}
       <header style={{
@@ -142,39 +165,103 @@ function App() {
           Get Accessible Route
         </button>
       </div>
-      {/* Feedback Form */}
-      <form onSubmit={handleFeedback} style={{ marginBottom: '20px' }}>
-        <label style={{ display: 'block', margin: '10px 0' }}>
-          User Feedback:
-          <textarea
-            placeholder="Suggestions? (e.g., Add more ramps)"
-            value={feedback}
-            onChange={(e) => setFeedback(e.target.value)}
-            rows={3}
-            style={{
-              display: 'block',
-              margin: '10px auto',
-              padding: '10px',
-              width: '300px',
-              border: '1px solid #000',
-              borderRadius: '4px'
-            }}
-          />
-        </label>
-        <button
-          type="submit"
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Submit Feedback
-        </button>
-      </form>
+      {/* Feedback Button */}
+      <button
+        onClick={() => setShowFeedback(true)}
+        style={{
+          position: 'fixed',
+          bottom: '20px',
+          right: '20px',
+          width: '50px',
+          height: '50px',
+          borderRadius: '50%',
+          backgroundColor: '#fdb515',
+          color: '#000',
+          border: 'none',
+          fontSize: '24px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
+          padding: '0',
+          overflow: 'hidden'
+        }}
+      >
+        +
+      </button>
+      {/* Feedback Modal */}
+      {showFeedback && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            padding: '20px',
+            borderRadius: '8px',
+            width: '80%',
+            maxWidth: '400px',
+            position: 'relative'
+          }}>
+            <button
+              onClick={() => setShowFeedback(false)}
+              style={{
+                position: 'absolute',
+                top: '10px',
+                right: '10px',
+                background: 'none',
+                border: 'none',
+                fontSize: '20px',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </button>
+            {/* Feedback Form */}
+            <form onSubmit={handleFeedback} style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', margin: '10px 0' }}>
+                User Feedback:
+                <textarea
+                  placeholder="Suggestions? (e.g., Add more ramps)"
+                  value={feedback}
+                  onChange={(e) => setFeedback(e.target.value)}
+                  rows={3}
+                  style={{
+                    display: 'block',
+                    margin: '10px auto',
+                    padding: '10px',
+                    width: '300px',
+                    border: '1px solid #000',
+                    borderRadius: '4px'
+                  }}
+                />
+              </label>
+              <button
+                type="submit"
+                style={{
+                  padding: '12px 24px',
+                  backgroundColor: '#000',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Submit Feedback
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       {/* Map */}
       <div style={{ margin: '0 auto', width: '90%', maxWidth: '800px' }}>
         <MapContainer
@@ -196,7 +283,7 @@ function App() {
         </p>
       </div>
       <footer style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
-        Built by Team 1 | Sprint 2 Progress (Mock DB for Demo)
+        Built by Team 1 | Sprint 2 Progress | Now with Supabase
       </footer>
     </div>
   );
