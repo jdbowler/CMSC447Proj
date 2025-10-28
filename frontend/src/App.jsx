@@ -22,7 +22,7 @@ const sampleBuildings = [
 
 function App() {
   const [start, setStart] = useState('');
-  const [end, setEnd] = useState('');
+  const [destination, setDestination] = useState('');
   const [feedback, setFeedback] = useState('');
   const [feedbacks, setFeedbacks] = useState([]);
   const [routeDrawn, setRouteDrawn] = useState(false);
@@ -47,7 +47,7 @@ function App() {
   }, []);
 
   const handleRoute = () => {
-    if (!start || !end) {
+    if (!start || !destination) {
       alert('Please enter start and end locations for viability check!');
       return;
     }
@@ -62,7 +62,7 @@ function App() {
         createMarker: () => null,
       }).addTo(mapRef.current);
       setRouteDrawn(true);
-      alert(`Route drawn: ${start} to ${end} (accessible path via ramps). Invalid paths avoided.`);
+      alert(`Route drawn: ${start} to ${destination} (accessible path via ramps). Invalid paths avoided.`);
       setTimeout(() => {
         mapRef.current.invalidateSize();
       }, 100);
@@ -72,9 +72,9 @@ function App() {
   const handleFeedback = async (e) => {
     e.preventDefault();
     if (!feedback.trim()) return alert('Add feedback!');
-  
+ 
     // Supabase insert
-    const newFeedback = { start, end, message: feedback };
+    const newFeedback = { start, destination, message: feedback };
     const { error } = await supabase.from('feedbacks').insert([newFeedback]);
     if (error) {
       console.error('Error submitting feedback:', error);
@@ -86,12 +86,25 @@ function App() {
     // // Update local state for count
     // setFeedbacks([...feedbacks, newFeedback]);
     // console.log('Feedback saved (DB):', newFeedback);
-  
+ 
     alert(`Feedback submitted! Total entries: ${feedbacks.length + 1}`);
     setFeedback('');
     setShowFeedback(false);
     fetchFeedbacks();
   };
+
+  const popularLocations = [
+    'Academic Row',
+    'Library',
+    'Commons',
+    'Engineering Building',
+    'Administration Building',
+    'Fine Arts Building',
+    'Performing Arts and Humanities Building',
+    'Retriever Activities Center',
+    'University Center',
+    'Residential Halls'
+  ];
 
   return (
     <div style={{
@@ -117,12 +130,10 @@ function App() {
       {/* Inputs */}
       <div style={{ marginBottom: '20px' }}>
         <label style={{ display: 'block', margin: '10px 0' }}>
-          Start Location:
-          <input
-            type="text"
-            placeholder="e.g., Academic Row"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
+          Destination:
+          <select
+            value={destination}
+            onChange={(e) => setDestination(e.target.value)}
             style={{
               display: 'block',
               margin: '10px auto',
@@ -131,25 +142,35 @@ function App() {
               border: '1px solid #000',
               borderRadius: '4px'
             }}
-          />
+          >
+            <option value="">Select destination</option>
+            {popularLocations.map(loc => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
+          </select>
         </label>
-        <label style={{ display: 'block', margin: '10px 0' }}>
-          End Location:
-          <input
-            type="text"
-            placeholder="e.g., Library"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            style={{
-              display: 'block',
-              margin: '10px auto',
-              padding: '10px',
-              width: '300px',
-              border: '1px solid #000',
-              borderRadius: '4px'
-            }}
-          />
-        </label>
+        {destination && (
+          <label style={{ display: 'block', margin: '10px 0' }}>
+            Start Location:
+            <select
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              style={{
+                display: 'block',
+                margin: '10px auto',
+                padding: '10px',
+                width: '300px',
+                border: '1px solid #000',
+                borderRadius: '4px'
+              }}
+            >
+              <option value="">Select start location</option>
+              {popularLocations.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+          </label>
+        )}
         <button
           onClick={handleRoute}
           style={{
