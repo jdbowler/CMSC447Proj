@@ -59,8 +59,8 @@ function App() {
     }
     if (mapRef.current) {
       // Sample UMBC path
-      const startLatLng = L.latLng(startBuilding.ycoord, startBuilding.xcoord);
-      const endLatLng = L.latLng(destBuilding.ycoord, destBuilding.xcoord);
+      const startLatLng = L.latLng(startBuilding.xcoord, startBuilding.ycoord);
+      const endLatLng = L.latLng(destBuilding.xcoord, destBuilding.ycoord);
       L.Routing.control({
         waypoints: [startLatLng, endLatLng],
         routeWhileDragging: true,
@@ -300,7 +300,7 @@ function App() {
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
           {popularLocations.map((b, i) => (
-            <Marker key={i} position={[b.ycoord, b.xcoord]} />
+            <Marker key={i} position={[b.xcoord, b.ycoord]} />
           ))}
         </MapContainer>
         <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
