@@ -51,10 +51,16 @@ function App() {
       alert('Please enter start and end locations for viability check!');
       return;
     }
+    const startBuilding = popularLocations.find(b => b.buildingName === start);
+    const destBuilding = popularLocations.find(b => b.buildingName === destination);
+    if (!startBuilding || !destBuilding) {
+      alert('Selected location not found in database!');
+      return;
+    }
     if (mapRef.current) {
       // Sample UMBC path
-      const startLatLng = L.latLng(39.254, -76.712);
-      const endLatLng = L.latLng(39.255, -76.713);
+      const startLatLng = L.latLng(startBuilding.ycoord, startBuilding.xcoord);
+      const endLatLng = L.latLng(destBuilding.ycoord, destBuilding.xcoord);
       L.Routing.control({
         waypoints: [startLatLng, endLatLng],
         routeWhileDragging: true,
@@ -72,7 +78,7 @@ function App() {
   const handleFeedback = async (e) => {
     e.preventDefault();
     if (!feedback.trim()) return alert('Add feedback!');
- 
+
     // Supabase insert
     const newFeedback = { start, destination, message: feedback };
     const { error } = await supabase.from('feedbacks').insert([newFeedback]);
@@ -86,26 +92,24 @@ function App() {
     // // Update local state for count
     // setFeedbacks([...feedbacks, newFeedback]);
     // console.log('Feedback saved (DB):', newFeedback);
- 
+
     alert(`Feedback submitted! Total entries: ${feedbacks.length + 1}`);
     setFeedback('');
     setShowFeedback(false);
     fetchFeedbacks();
   };
-
-  const popularLocations = [
-    'Academic Row',
-    'Library',
-    'Commons',
-    'Engineering Building',
-    'Administration Building',
-    'Fine Arts Building',
-    'Performing Arts and Humanities Building',
-    'Retriever Activities Center',
-    'University Center',
-    'Residential Halls'
-  ];
-
+  const [popularLocations, setPopularLocations] = useState([]);
+  useEffect(() => {
+    const fetchBuildings = async () => {
+      const { data, error } = await supabase.from('locations').select('buildingName, xcoord, ycoord');
+      if (error) {
+        console.error('Error fetching buildings:', error);
+      } else {
+        setPopularLocations(data || []);
+      }
+    };
+    fetchBuildings();
+  }, []);
   return (
     <div style={{
       minHeight: '100vh',
@@ -145,7 +149,7 @@ function App() {
           >
             <option value="">Select destination</option>
             {popularLocations.map(loc => (
-              <option key={loc} value={loc}>{loc}</option>
+              <option key={loc.buildingName} value={loc.buildingName}>{loc.buildingName}</option>
             ))}
           </select>
         </label>
@@ -166,7 +170,7 @@ function App() {
             >
               <option value="">Select start location</option>
               {popularLocations.map(loc => (
-                <option key={loc} value={loc}>{loc}</option>
+                <option key={loc.buildingName} value={loc.buildingName}>{loc.buildingName}</option>
               ))}
             </select>
           </label>
@@ -295,8 +299,8 @@ function App() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           />
-          {sampleBuildings.map((b, i) => (
-            <Marker key={i} position={[b.lat, b.lng]} />
+          {popularLocations.map((b, i) => (
+            <Marker key={i} position={[b.ycoord, b.xcoord]} />
           ))}
         </MapContainer>
         <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
