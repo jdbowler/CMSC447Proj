@@ -69,3 +69,35 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden;
+}
+
+/* Reset outer padding */
+div[style*="padding: '20px'"] {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+/* Full-width gold header */
+.gold-header {
+  width: 100vw !important;
+  margin: 0 !important;
+  margin-left: calc(-50vw + 50%) !important;
+  padding: 20px !important;
+  background-color: #fdb515 !important;
+  color: #000 !important;
+  border-radius: 0 !important;
+  position: relative !important;
+  box-sizing: border-box !important;
+}
+
+/* Restore padding for content below header */
+.gold-header + * {
+  margin-left: 20px !important;
+  margin-right: 20px !important;
+}

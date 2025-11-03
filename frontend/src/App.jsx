@@ -27,6 +27,7 @@ function App() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [routeDrawn, setRouteDrawn] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const mapRef = useRef(null);
 
   useEffect(() => {
@@ -117,19 +118,38 @@ function App() {
       color: '#000',
       fontFamily: 'Arial, sans-serif',
       textAlign: 'center',
-      padding: '20px',
+      padding: '0 20px 20px 20px',
       position: 'relative'
     }}>
       {/* Header */}
-      <header style={{
+      <header className="gold-header" style={{
         backgroundColor: '#fdb515',
         color: '#000',
         padding: '20px',
         marginBottom: '20px',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        position: 'relative'
       }}>
         <h1 style={{ margin: 0 }}>UMBC Accessible Navigation System</h1>
         <p style={{ margin: 0, fontSize: '14px' }}>Navigate campus with ramps, elevators, and stair-free paths</p>
+        <div
+          style={{
+            position: 'absolute',
+            top: '40px',
+            left: '40px',
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-around',
+            width: '30px',
+            height: '25px',
+          }}
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <div style={{ width: '100%', height: '3px', backgroundColor: '#000' }}></div>
+          <div style={{ width: '100%', height: '3px', backgroundColor: '#000' }}></div>
+          <div style={{ width: '100%', height: '3px', backgroundColor: '#000' }}></div>
+        </div>
       </header>
       {/* Inputs */}
       <div style={{ marginBottom: '20px' }}>
@@ -288,28 +308,75 @@ function App() {
         </div>
       )}
       {/* Map */}
-      <div style={{ margin: '0 auto', width: '90%', maxWidth: '800px' }}>
-        <MapContainer
-          center={[39.254, -76.712]} // UMBC center
-          zoom={15}
-          style={{ height: '400px', width: '100%', borderRadius: '8px', border: '2px solid #fdb515' }}
-          whenCreated={(map) => { mapRef.current = map; }}
-        >
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          />
-          {popularLocations.map((b, i) => (
-            <Marker key={i} position={[b.xcoord, b.ycoord]} />
-          ))}
-        </MapContainer>
-        <p style={{ fontSize: '12px', color: '#666', marginTop: '5px' }}>
-          {routeDrawn ? 'Route drawn (drag to adjust).' : 'Zoom/pan to explore UMBC.'}
-        </p>
-      </div>
+    <div className="map-wrapper" style={{ margin: '0 auto 20px', width: '100%', maxWidth: 'none' }}>
+    <MapContainer
+        center={[39.254, -76.712]} // UMBC center
+        zoom={15}
+        style={{ height: '400px', width: '100%', borderRadius: '8px', border: '2px solid #fdb515' }}
+        whenCreated={(map) => { mapRef.current = map; }}
+    >
+        <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        {popularLocations.map((b, i) => (
+        <Marker key={i} position={[b.xcoord, b.ycoord]} />
+        ))}
+    </MapContainer>
+    <p style={{ fontSize: '12px', color: '#666', marginTop: '5px', marginBottom: '0' }}>
+        {routeDrawn ? 'Route drawn (drag to adjust).' : 'Zoom/pan to explore UMBC.'}
+    </p>
+    </div>
       <footer style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
         Built by Team 1 | Sprint 2 Progress | Now with Supabase
       </footer>
+      {/* Hamburger Menu */}
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: menuOpen ? 0 : '-400px',
+        width: '300px',
+        height: '100%',
+        backgroundColor: '#fff',
+        transition: 'right 0.3s ease',
+        padding: '20px',
+        boxShadow: '-2px 0 5px rgba(0,0,0,0.5)',
+        overflowY: 'auto',
+        zIndex: 1000
+      }}>
+        <button
+          onClick={() => setMenuOpen(false)}
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'none',
+            border: 'none',
+            fontSize: '20px',
+            cursor: 'pointer'
+          }}
+        >
+          ×
+        </button>
+        <h2 style={{ marginTop: '40px' }}>About</h2>
+        <p>This is the UMBC Accessible Navigation System.</p>
+        
+        <h2>View Feedbacks</h2>
+        {feedbacks.length > 0 ? (
+          <ul style={{ listStyleType: 'none', padding: 0 }}>
+            {feedbacks.map((f, index) => (
+              <li key={f.id || index} style={{ marginBottom: '10px' }}>
+                {f.message} {f.start && f.destination && `(from ${f.start} to ${f.destination})`}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No feedbacks yet.</p>
+        )}
+        
+        <h2>Help</h2>
+        <p>Select start and destination from the dropdowns, then click Get Accessible Route to see the path on the map. Use the + button to submit feedback.</p>
+      </div>
     </div>
   );
 }
