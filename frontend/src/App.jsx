@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
 import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
 import { supabase } from './supabase';
+import { Analytics } from '@vercel/analytics/react';
 
 // Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -121,6 +122,7 @@ function App() {
       padding: '0 20px 20px 20px',
       position: 'relative'
     }}>
+    <Analytics />
       {/* Header */}
       <header className="gold-header" style={{
         backgroundColor: '#fdb515',
