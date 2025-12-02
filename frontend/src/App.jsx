@@ -391,7 +391,7 @@ function App() {
             cursor: 'pointer',
             transition: 'color 0.2s',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(153, 113, 113, 1)'}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(140, 97, 97, 1)'}
           onMouseLeave={(e) => e.currentTarget.style.color = '#333'}
         >
           ×
