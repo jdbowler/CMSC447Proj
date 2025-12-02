@@ -308,7 +308,7 @@ function App() {
               <label style={{ display: 'block', margin: '10px 0' }}>
                 User Feedback:
                 <textarea
-                  placeholder="Suggestions? (e.g., Add more ramps)"
+                  placeholder="Feel free to share your feedback about the app, or about campus (e.g., elevator not working in ITE)"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                   rows={3}
