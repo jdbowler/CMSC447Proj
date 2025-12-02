@@ -34,20 +34,78 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const mapRef = useRef(null);
+  const inactivityTimeoutRef = useRef(null);
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error getting session:', error);
+        await supabase.auth.signOut();
+        setUser(null);
+        setIsAdmin(false);
+        return;
+      }
+      setUser(session?.user ?? null);
+      if (session) {
+        const { data: profile, error: profileError } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(profile ? profile.is_admin : false);
+        }
+        resetInactivityTimeout();
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    initializeSession();
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
       if (session) {
-        setUser(session.user);
-        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
-        setIsAdmin(profile ? profile.is_admin : false);
+        const { data: profile, error } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
+        if (error) {
+          console.error('Profile fetch error:', error);
+          setIsAdmin(false);
+        } else {
+          setIsAdmin(profile ? profile.is_admin : false);
+        }
+        resetInactivityTimeout();
       } else {
-        setUser(null);
         setIsAdmin(false);
+        clearTimeout(inactivityTimeoutRef.current);
       }
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // Inactivity logout
+  const handleLogoutOnInactivity = async () => {
+    await supabase.auth.signOut();
+    alert('Logged out due to inactivity.');
+  };
+
+  const resetInactivityTimeout = () => {
+    clearTimeout(inactivityTimeoutRef.current);
+    inactivityTimeoutRef.current = setTimeout(handleLogoutOnInactivity, INACTIVITY_TIMEOUT);
+  };
+
+  useEffect(() => {
+    const handleActivity = () => {
+      if (user) resetInactivityTimeout();
+    };
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    return () => {
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+    };
+  }, [user]);
 
   useEffect(() => {
     if (mapRef.current) {
