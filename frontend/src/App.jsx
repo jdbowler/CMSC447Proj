@@ -29,16 +29,25 @@ function App() {
   const [routeDrawn, setRouteDrawn] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const mapRef = useRef(null);
 
   useEffect(() => {
-    fetchFeedbacks();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session) {
+        setUser(session.user);
+        const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', session.user.id).single();
+        setIsAdmin(profile ? profile.is_admin : false);
+      } else {
+        setUser(null);
+        setIsAdmin(false);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
-  const fetchFeedbacks = async () => {
-    const { data, error } = await supabase.from('feedbacks').select('*');
-    if (error) console.error('Error fetching feedbacks:', error);
-    else setFeedbacks(data || []);
-  };
 
   useEffect(() => {
     if (mapRef.current) {
@@ -47,6 +56,18 @@ function App() {
       }, 100);
     }
   }, []);
+
+  useEffect(() => {
+    if (menuOpen && isAdmin) {
+      fetchFeedbacks();
+    }
+  }, [menuOpen, isAdmin]);
+
+  const fetchFeedbacks = async () => {
+    const { data, error } = await supabase.from('feedbacks').select('*');
+    if (error) console.error('Error fetching feedbacks:', error);
+    else setFeedbacks(data || []);
+  };
 
   const handleRoute = () => {
     if (!start || !destination) {
@@ -90,16 +111,25 @@ function App() {
       return;
     }
 
-    // Mock DB Code
-    // // Update local state for count
-    // setFeedbacks([...feedbacks, newFeedback]);
-    // console.log('Feedback saved (DB):', newFeedback);
-
     alert(`Feedback submitted! Total entries: ${feedbacks.length + 1}`);
     setFeedback('');
     setShowFeedback(false);
-    fetchFeedbacks();
+    if (isAdmin) fetchFeedbacks();
   };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    setEmail('');
+    setPassword('');
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setMenuOpen(false);
+  };
+
   const [popularLocations, setPopularLocations] = useState([]);
   useEffect(() => {
     const fetchBuildings = async () => {
@@ -362,20 +392,49 @@ function App() {
         </button>
         <h2 style={{ marginTop: '40px' }}>About</h2>
         <p>This is the UMBC Accessible Navigation System.</p>
-        
-        <h2>View Feedbacks</h2>
-        {feedbacks.length > 0 ? (
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
-            {feedbacks.map((f, index) => (
-              <li key={f.id || index} style={{ marginBottom: '10px' }}>
-                {f.message} {f.start && f.destination && `(from ${f.start} to ${f.destination})`}
-              </li>
-            ))}
-          </ul>
+        {!user ? (
+          <div>
+            <h2>Admin Login</h2>
+            <form onSubmit={handleLogin}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email"
+                style={{ display: 'block', margin: '10px 0', padding: '10px', width: '100%' }}
+              />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                style={{ display: 'block', margin: '10px 0', padding: '10px', width: '100%' }}
+              />
+              <button type="submit" style={{ padding: '10px', width: '100%' }}>Login</button>
+            </form>
+          </div>
+        ) : !isAdmin ? (
+          <div>
+            <p>You are not an admin.</p>
+            <button onClick={handleLogout} style={{ padding: '10px', width: '100%' }}>Logout</button>
+          </div>
         ) : (
-          <p>No feedbacks yet.</p>
+          <div>
+            <h2>View Feedbacks</h2>
+            {feedbacks.length > 0 ? (
+              <ul style={{ listStyleType: 'none', padding: 0 }}>
+                {feedbacks.map((f, index) => (
+                  <li key={f.id || index} style={{ marginBottom: '10px' }}>
+                    {f.message} {f.start && f.destination && `(from ${f.start} to ${f.destination})`}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No feedbacks yet.</p>
+            )}
+            <button onClick={handleLogout} style={{ padding: '10px', width: '100%' }}>Logout</button>
+          </div>
         )}
-        
         <h2>Help</h2>
         <p>Select start and destination from the dropdowns, then click Get Accessible Route to see the path on the map. Use the + button to submit feedback.</p>
       </div>
