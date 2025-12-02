@@ -360,40 +360,47 @@ function App() {
     </p>
     </div>
       <footer style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
-        Built by Team 1 | Sprint 2 Progress | Now with Supabase
+        Built by Team 1 | Sprint 3 Progress | Now with Supabase
       </footer>
       {/* Hamburger Menu */}
       <div style={{
         position: 'fixed',
         top: 0,
-        left: menuOpen ? 0 : '-400px',
-        width: '300px',
+        left: menuOpen ? 0 : '-450px',
+        width: '350px',
         height: '100%',
-        backgroundColor: '#fff',
-        transition: 'right 0.3s ease',
+        backgroundColor: 'rgba(255, 235, 200, 0.80)',
+        boxShadow: '2px 0 10px rgba(0,0,0,0.3)',
+        transition: 'left 0.3s ease',
         padding: '20px',
-        boxShadow: '-2px 0 5px rgba(0,0,0,0.5)',
         overflowY: 'auto',
         zIndex: 1000
       }}>
+        {/* Close button */}
         <button
           onClick={() => setMenuOpen(false)}
           style={{
             position: 'absolute',
-            top: '10px',
-            right: '10px',
+            top: '15px',
+            right: '15px',
             background: 'none',
             border: 'none',
-            fontSize: '20px',
-            cursor: 'pointer'
+            fontSize: '28px',
+            fontWeight: 'bold',
+            color: '#333',
+            cursor: 'pointer',
+            transition: 'color 0.2s',
           }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(153, 113, 113, 1)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = '#333'}
         >
           ×
         </button>
         <h2 style={{ marginTop: '40px' }}>About</h2>
-        <p>This is the UMBC Accessible Navigation System.</p>
+        <p>This is the UMBC Accessible Navigation System, designed to help you navigate campus safely and efficiently.</p>
         {!user ? (
-          <div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <h2>Admin Login</h2>
             <form onSubmit={handleLogin}>
               <input
@@ -401,14 +408,14 @@ function App() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
-                style={{ display: 'block', margin: '10px 0', padding: '10px', width: '100%' }}
+                style={{ display: 'flex',  padding: '10px', width: '100%',flexDirection: 'column', gap: '15px', alignContent: 'center', margin: '10px 0' }}
               />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                style={{ display: 'block', margin: '10px 0', padding: '10px', width: '100%' }}
+                style={{ display: 'flex', margin: '10px 0', padding: '10px', width: '100%',flexDirection: 'column', gap: '15px' }}
               />
               <button type="submit" style={{ padding: '10px', width: '100%' }}>Login</button>
             </form>
