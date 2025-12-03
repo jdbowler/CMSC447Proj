@@ -20,14 +20,18 @@ function App() {
   const [destination, setDestination] = useState('');
   const [feedback, setFeedback] = useState('');
   const [feedbacks, setFeedbacks] = useState([]);
-  const [routeDrawn, setRouteDrawn] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isRoutePage, setIsRoutePage] = useState(false);
+  const [startCoord, setStartCoord] = useState(null);
+  const [destCoord, setDestCoord] = useState(null);
+  const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef(null);
+  const routingControlRef = useRef(null);
   const inactivityTimeoutRef = useRef(null);
   const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -102,12 +106,12 @@ function App() {
   }, [user]);
 
   useEffect(() => {
-    if (mapRef.current) {
+    if (mapRef.current && mapReady) {
       setTimeout(() => {
         mapRef.current.invalidateSize();
       }, 100);
     }
-  }, []);
+  }, [mapReady]);
 
   useEffect(() => {
     if (menuOpen && isAdmin) {
@@ -126,28 +130,7 @@ function App() {
       alert('Please enter start and end locations for viability check!');
       return;
     }
-    const startBuilding = popularLocations.find(b => b.buildingName === start);
-    const destBuilding = popularLocations.find(b => b.buildingName === destination);
-    if (!startBuilding || !destBuilding) {
-      alert('Selected location not found in database!');
-      return;
-    }
-    if (mapRef.current) {
-      // Sample UMBC path
-      const startLatLng = L.latLng(startBuilding.xcoord, startBuilding.ycoord);
-      const endLatLng = L.latLng(destBuilding.xcoord, destBuilding.ycoord);
-      L.Routing.control({
-        waypoints: [startLatLng, endLatLng],
-        routeWhileDragging: true,
-        show: false,
-        createMarker: () => null,
-      }).addTo(mapRef.current);
-      setRouteDrawn(true);
-      alert(`Route drawn: ${start} to ${destination} (accessible path via ramps). Invalid paths avoided.`);
-      setTimeout(() => {
-        mapRef.current.invalidateSize();
-      }, 100);
-    }
+    window.open(`/?start=${encodeURIComponent(start)}&destination=${encodeURIComponent(destination)}`, '_blank');
   };
 
   const handleFeedback = async (e) => {
@@ -194,6 +177,70 @@ function App() {
     };
     fetchBuildings();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paramStart = params.get('start');
+    const paramDest = params.get('destination');
+    if (paramStart && paramDest) {
+      setStart(paramStart);
+      setDestination(paramDest);
+      setIsRoutePage(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (popularLocations.length > 0 && start && destination && isRoutePage) {
+      const sb = popularLocations.find(b => b.buildingName === start);
+      const db = popularLocations.find(b => b.buildingName === destination);
+      if (sb) setStartCoord([sb.xcoord, sb.ycoord]);
+      if (db) setDestCoord([db.xcoord, db.ycoord]);
+    }
+  }, [popularLocations, start, destination, isRoutePage]);
+
+  useEffect(() => {
+    if (isRoutePage && mapReady && startCoord && destCoord) {
+      const startLatLng = L.latLng(...startCoord);
+      const endLatLng = L.latLng(...destCoord);
+      const control = L.Routing.control({
+        waypoints: [startLatLng, endLatLng],
+        routeWhileDragging: true,
+        show: true,
+        createMarker: () => null,
+      }).addTo(mapRef.current);
+      routingControlRef.current = control;
+      mapRef.current.fitBounds(L.latLngBounds([startLatLng, endLatLng]));
+      return () => {
+        if (mapRef.current && routingControlRef.current) {
+          mapRef.current.removeControl(routingControlRef.current);
+        }
+      };
+    }
+  }, [isRoutePage, mapReady, startCoord, destCoord]);
+
+  if (isRoutePage) {
+    return (
+      <div style={{ height: '100vh', width: '100vw', margin: 0, padding: 0 }}>
+        <MapContainer
+          center={[39.254, -76.712]}
+          zoom={15}
+          style={{ height: '100%', width: '100%' }}
+          whenCreated={(map) => {
+            mapRef.current = map;
+            setMapReady(true);
+          }}
+        >
+          <TileLayer
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          />
+          {startCoord && <Marker position={startCoord} />}
+          {destCoord && <Marker position={destCoord} />}
+        </MapContainer>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -397,7 +444,10 @@ function App() {
         center={[39.254, -76.712]} // UMBC center
         zoom={15}
         style={{ height: '400px', width: '100%', borderRadius: '8px', border: '2px solid #fdb515' }}
-        whenCreated={(map) => { mapRef.current = map; }}
+        whenCreated={(map) => {
+          mapRef.current = map;
+          setMapReady(true);
+        }}
     >
         <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -408,7 +458,7 @@ function App() {
         ))}
     </MapContainer>
     <p style={{ fontSize: '12px', color: '#666', marginTop: '5px', marginBottom: '0' }}>
-        {routeDrawn ? 'Route drawn (drag to adjust).' : 'Zoom/pan to explore UMBC.'}
+        Zoom/pan to explore UMBC.
     </p>
     </div>
       <footer style={{ marginTop: '20px', fontSize: '12px', color: '#666' }}>
