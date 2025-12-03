@@ -203,7 +203,7 @@ function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#fff',
+      backgroundColor: '#f5efefff',
       color: '#000',
       fontFamily: 'Arial, sans-serif',
       textAlign: 'center',
