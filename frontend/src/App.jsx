@@ -15,12 +15,6 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Sample buildings (mock DB pull)
-const sampleBuildings = [
-  { name: 'Academic Row', lat: 39.254, lng: -76.712 },
-  { name: 'Library', lat: 39.255, lng: -76.713 },
-];
-
 function App() {
   const [start, setStart] = useState('');
   const [destination, setDestination] = useState('');
