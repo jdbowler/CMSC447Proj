@@ -400,25 +400,18 @@ function App() {
       {/* Map */}
     <div className="map-wrapper" style={{ margin: '0 auto 20px', width: '100%', maxWidth: 'none' }}>
     <MapContainer
-      center={[39.254, -76.712]} // UMBC center
-      zoom={15}
-      style={{ height: '400px', width: '100%', borderRadius: '8px', border: '2px solid #fdb515' }}
-      whenCreated={(map) => { mapRef.current = map; }}
+        center={[39.254, -76.712]} // UMBC center
+        zoom={15}
+        style={{ height: '400px', width: '100%', borderRadius: '8px', border: '2px solid #fdb515' }}
+        whenCreated={(map) => { mapRef.current = map; }}
     >
-      <TileLayer
+        <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; OpenStreetMap'
-      />
-
-      {/* Building Markers */}
-      {popularLocations.map((b, i) => (
-        <Marker
-          key={i}
-          position={[b.ycoord, b.xcoord]}  // FIXED: latitude first
-        >
-          <Popup>{b.buildingName}</Popup>
-        </Marker>
-      ))}
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        />
+        {popularLocations.map((b, i) => (
+        <Marker key={i} position={[b.ycoord, b.xcoord]} />
+        ))}
     </MapContainer>
     <p style={{ fontSize: '12px', color: '#666', marginTop: '5px', marginBottom: '0' }}>
         {routeDrawn ? 'Route drawn (drag to adjust).' : 'Zoom/pan to explore UMBC.'}
@@ -434,7 +427,7 @@ function App() {
         left: menuOpen ? 0 : '-450px',
         width: '350px',
         height: '100%',
-        backgroundColor: 'rgba(255, 235, 200, 0.80)',
+        backgroundColor: 'rgba(245, 230, 205, 0.8)',
         boxShadow: '2px 0 10px rgba(0,0,0,0.3)',
         transition: 'left 0.3s ease',
         padding: '20px',
