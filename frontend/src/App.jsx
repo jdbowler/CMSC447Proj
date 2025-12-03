@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-routing-machine';
@@ -31,7 +31,6 @@ function App() {
   const [destCoord, setDestCoord] = useState(null);
   const [mapReady, setMapReady] = useState(false);
   const mapRef = useRef(null);
-  const routingControlRef = useRef(null);
   const inactivityTimeoutRef = useRef(null);
   const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -202,19 +201,7 @@ function App() {
     if (isRoutePage && mapReady && startCoord && destCoord) {
       const startLatLng = L.latLng(...startCoord);
       const endLatLng = L.latLng(...destCoord);
-      const control = L.Routing.control({
-        waypoints: [startLatLng, endLatLng],
-        routeWhileDragging: true,
-        show: true,
-        createMarker: () => null,
-      }).addTo(mapRef.current);
-      routingControlRef.current = control;
       mapRef.current.fitBounds(L.latLngBounds([startLatLng, endLatLng]));
-      return () => {
-        if (mapRef.current && routingControlRef.current) {
-          mapRef.current.removeControl(routingControlRef.current);
-        }
-      };
     }
   }, [isRoutePage, mapReady, startCoord, destCoord]);
 
@@ -236,6 +223,7 @@ function App() {
           />
           {startCoord && <Marker position={startCoord} />}
           {destCoord && <Marker position={destCoord} />}
+          {startCoord && destCoord && <Polyline positions={[startCoord, destCoord]} color="blue" />}
         </MapContainer>
       </div>
     );
